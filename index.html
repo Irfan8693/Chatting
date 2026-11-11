@@ -1,1 +1,159 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat Pe Chat</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #0f172a; color: #e2e8f0;
+    display: flex; flex-direction: column; height: 100dvh;
+  }
+  header { background: #1e293b; padding: 10px 12px; border-bottom: 1px solid #334155; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .top h1 { font-size: 18px; }
+  #who { font-size: 13px; color: #94a3b8; cursor: pointer; text-decoration: underline; }
+  .tabs { display: flex; gap: 8px; }
+  .tab {
+    flex: 1; padding: 10px; border: 0; border-radius: 10px; font-size: 16px;
+    background: #334155; color: #e2e8f0; cursor: pointer;
+  }
+  .tab.active { background: #2563eb; color: #fff; font-weight: 600; }
+  #messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { max-width: 80%; padding: 8px 12px; border-radius: 14px; background: #334155; word-wrap: break-word; overflow-wrap: anywhere; }
+  .msg.me { align-self: flex-end; background: #2563eb; color: #fff; }
+  .msg .name { font-size: 12px; color: #93c5fd; margin-bottom: 2px; font-weight: 600; }
+  .msg.me .name { display: none; }
+  .msg .text { font-size: 16px; white-space: pre-wrap; }
+  .msg .time { font-size: 11px; color: #cbd5e1; opacity: .75; text-align: right; margin-top: 2px; }
+  .empty { text-align: center; color: #64748b; margin-top: 30px; }
+  form { display: flex; gap: 8px; padding: 10px; background: #1e293b; border-top: 1px solid #334155; }
+  #input { flex: 1; padding: 12px; border-radius: 22px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 16px; outline: none; }
+  #send { padding: 0 20px; border: 0; border-radius: 22px; background: #2563eb; color: #fff; font-size: 16px; cursor: pointer; }
+  #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.97); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10; }
+  #overlay.hidden { display: none; }
+  .card { background: #1e293b; padding: 24px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; }
+  .card h2 { margin-bottom: 14px; }
+  .card input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 16px; margin-bottom: 12px; outline: none; }
+  .card button { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font-size: 16px; cursor: pointer; }
+</style>
+</head>
+<body>
 
+<div id="overlay">
+  <div class="card">
+    <h2>Aapka naam kya hai?</h2>
+    <input id="nameInput" type="text" maxlength="20" placeholder="Naam likhiye" autocomplete="off">
+    <button id="nameBtn">Chat shuru karo</button>
+  </div>
+</div>
+
+<header>
+  <div class="top">
+    <h1>💬 Chat Pe Chat</h1>
+    <span id="who"></span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-room="friends">दोस्त</button>
+    <button class="tab" data-room="family">परिवार</button>
+  </div>
+</header>
+
+<div id="messages"></div>
+
+<form id="form">
+  <input id="input" type="text" placeholder="Message likhiye…" autocomplete="off" maxlength="500">
+  <button id="send" type="submit">Bhejo</button>
+</form>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB7C3BAAnLQ1TiWKQcbxCfbqYYQla0CP7U",
+    authDomain: "chatpechat-66372.firebaseapp.com",
+    databaseURL: "https://chatpechat-66372-default-rtdb.firebaseio.com",
+    projectId: "chatpechat-66372",
+    storageBucket: "chatpechat-66372.firebasestorage.app",
+    messagingSenderId: "764972790822",
+    appId: "1:764972790822:web:e101b9d8fe1b26aeb662e7",
+    measurementId: "G-HPFDBVJVTN"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const overlay = document.getElementById('overlay');
+  const nameInput = document.getElementById('nameInput');
+  const who = document.getElementById('who');
+  const box = document.getElementById('messages');
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+
+  let me = '';
+  let room = 'friends';
+  let query = null;
+
+  try { me = localStorage.getItem('chatName') || ''; } catch (e) {}
+
+  function setName(n) {
+    me = n;
+    try { localStorage.setItem('chatName', n); } catch (e) {}
+    who.textContent = '👤 ' + me + ' (badlo)';
+    overlay.classList.add('hidden');
+  }
+
+  document.getElementById('nameBtn').onclick = () => {
+    const n = nameInput.value.trim();
+    if (n) setName(n);
+  };
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('nameBtn').click();
+  });
+  who.onclick = () => { nameInput.value = me; overlay.classList.remove('hidden'); nameInput.focus(); };
+
+  function addMessage(m) {
+    const empty = box.querySelector('.empty');
+    if (empty) empty.remove();
+    const d = document.createElement('div');
+    d.className = 'msg' + (m.name === me ? ' me' : '');
+    const n = document.createElement('div'); n.className = 'name'; n.textContent = m.name;
+    const t = document.createElement('div'); t.className = 'text'; t.textContent = m.text;
+    const tm = document.createElement('div'); tm.className = 'time';
+    tm.textContent = m.t ? new Date(m.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    d.append(n, t, tm);
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function openRoom(r) {
+    room = r;
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.room === r));
+    if (query) query.off();
+    box.innerHTML = '<div class="empty">Abhi koi message nahi. Pehla message aap bhejo! 👋</div>';
+    query = db.ref('rooms/' + r + '/messages').limitToLast(100);
+    query.on('child_added', (snap) => addMessage(snap.val()));
+  }
+
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => openRoom(b.dataset.room));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text || !me) return;
+    db.ref('rooms/' + room + '/messages').push({
+      name: me,
+      text: text,
+      t: firebase.database.ServerValue.TIMESTAMP
+    });
+    input.value = '';
+    input.focus();
+  });
+
+  if (me) setName(me); else overlay.classList.remove('hidden');
+  openRoom('friends');
+</script>
+</body>
+</html>
