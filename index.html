@@ -13,49 +13,77 @@
     display: flex; flex-direction: column; height: 100dvh;
   }
   header { background: #1e293b; padding: 10px 12px; border-bottom: 1px solid #334155; }
-  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   .top h1 { font-size: 18px; }
-  #who { font-size: 13px; color: #94a3b8; cursor: pointer; text-decoration: underline; }
+  .link { font-size: 13px; color: #94a3b8; cursor: pointer; text-decoration: underline; }
+  .sub { margin-bottom: 8px; }
   .tabs { display: flex; gap: 8px; }
-  .tab {
-    flex: 1; padding: 10px; border: 0; border-radius: 10px; font-size: 16px;
-    background: #334155; color: #e2e8f0; cursor: pointer;
-  }
+  .tab { flex: 1; padding: 10px; border: 0; border-radius: 10px; font-size: 16px; background: #334155; color: #e2e8f0; cursor: pointer; }
   .tab.active { background: #2563eb; color: #fff; font-weight: 600; }
   #messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .msg { max-width: 80%; padding: 8px 12px; border-radius: 14px; background: #334155; word-wrap: break-word; overflow-wrap: anywhere; }
+  .msg { max-width: 80%; padding: 8px 12px; border-radius: 14px; background: #334155; overflow-wrap: anywhere; }
   .msg.me { align-self: flex-end; background: #2563eb; color: #fff; }
   .msg .name { font-size: 12px; color: #93c5fd; margin-bottom: 2px; font-weight: 600; }
   .msg.me .name { display: none; }
   .msg .text { font-size: 16px; white-space: pre-wrap; }
   .msg .time { font-size: 11px; color: #cbd5e1; opacity: .75; text-align: right; margin-top: 2px; }
   .empty { text-align: center; color: #64748b; margin-top: 30px; }
+  .empty button { margin-top: 12px; padding: 10px 18px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font-size: 16px; cursor: pointer; }
   form { display: flex; gap: 8px; padding: 10px; background: #1e293b; border-top: 1px solid #334155; }
   #input { flex: 1; padding: 12px; border-radius: 22px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 16px; outline: none; }
   #send { padding: 0 20px; border: 0; border-radius: 22px; background: #2563eb; color: #fff; font-size: 16px; cursor: pointer; }
-  #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.97); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10; }
-  #overlay.hidden { display: none; }
+  .overlay { position: fixed; inset: 0; background: rgba(15,23,42,.97); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10; }
+  .overlay.hidden { display: none; }
   .card { background: #1e293b; padding: 24px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; }
   .card h2 { margin-bottom: 14px; }
   .card input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 16px; margin-bottom: 12px; outline: none; }
-  .card button { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font-size: 16px; cursor: pointer; }
+  .card button { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font-size: 16px; cursor: pointer; margin-bottom: 8px; }
+  .card button.alt { background: #334155; font-size: 14px; }
+  .card button:disabled { opacity: .5; }
+  .err { color: #fca5a5; font-size: 14px; min-height: 20px; margin-bottom: 8px; }
+  .hint { color: #94a3b8; font-size: 13px; margin-bottom: 12px; }
 </style>
 </head>
 <body>
 
-<div id="overlay">
+<div id="nameOverlay" class="overlay hidden">
   <div class="card">
     <h2>Aapka naam kya hai?</h2>
     <input id="nameInput" type="text" maxlength="20" placeholder="Naam likhiye" autocomplete="off">
-    <button id="nameBtn">Chat shuru karo</button>
+    <button id="nameBtn">Aage badho</button>
+  </div>
+</div>
+
+<div id="passOverlay" class="overlay hidden">
+  <div class="card">
+    <h2 id="passTitle">🔒</h2>
+    <input id="passInput" type="password" placeholder="Password" autocomplete="off">
+    <div id="passErr" class="err"></div>
+    <button id="openBtn">Kholo</button>
+    <button id="createBtn" class="alt">Pehli baar? Naya password set karo</button>
+    <button id="cancelBtn" class="alt">Wapas</button>
+    <div class="hint">Naya room sirf ek vyakti ko banana hai. Baaki sab "Kholo" dabayenge.</div>
+  </div>
+</div>
+
+<div id="changeOverlay" class="overlay hidden">
+  <div class="card">
+    <h2 id="changeTitle">🔑 Password badlo</h2>
+    <input id="newPass" type="password" placeholder="Naya password" autocomplete="off">
+    <input id="newPass2" type="password" placeholder="Naya password dobara likho" autocomplete="off">
+    <div id="changeErr" class="err"></div>
+    <button id="changeBtn">Password badlo</button>
+    <button id="changeCancel" class="alt">Wapas</button>
+    <div class="hint">Purani chat naye password wale room me copy ho jayegi. Purana password band ho jayega, aur baaki sabko naya password dena padega.</div>
   </div>
 </div>
 
 <header>
   <div class="top">
     <h1>💬 Chat Pe Chat</h1>
-    <span id="who"></span>
+    <span id="who" class="link"></span>
   </div>
+  <div class="sub"><span id="chpw" class="link" style="display:none">🔑 Password badlo</span></div>
   <div class="tabs">
     <button class="tab active" data-room="friends">दोस्त</button>
     <button class="tab" data-room="family">परिवार</button>
@@ -85,37 +113,131 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  const overlay = document.getElementById('overlay');
-  const nameInput = document.getElementById('nameInput');
-  const who = document.getElementById('who');
-  const box = document.getElementById('messages');
-  const form = document.getElementById('form');
-  const input = document.getElementById('input');
-
+  const $ = (id) => document.getElementById(id);
+  const roomNames = { friends: 'दोस्त', family: 'परिवार' };
+  const keys = {};
   let me = '';
   let room = 'friends';
   let query = null;
+  let okRef = null;
 
-  try { me = localStorage.getItem('chatName') || ''; } catch (e) {}
+  try {
+    me = localStorage.getItem('chatName') || '';
+    for (const r in roomNames) { const k = localStorage.getItem('key_' + r); if (k) keys[r] = k; }
+  } catch (e) {}
 
+  function saveKey(r, k) { try { localStorage.setItem('key_' + r, k); } catch (e) {} }
+  function dropKey(r) { delete keys[r]; try { localStorage.removeItem('key_' + r); } catch (e) {} }
+
+  /* ---------- naam ---------- */
   function setName(n) {
     me = n;
     try { localStorage.setItem('chatName', n); } catch (e) {}
-    who.textContent = '👤 ' + me + ' (badlo)';
-    overlay.classList.add('hidden');
+    $('who').textContent = '👤 ' + me + ' (badlo)';
+    $('nameOverlay').classList.add('hidden');
+    openRoom(room);
+  }
+  $('nameBtn').onclick = () => { const n = $('nameInput').value.trim(); if (n) setName(n); };
+  $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('nameBtn').click(); });
+  $('who').onclick = () => { $('nameInput').value = me; $('nameOverlay').classList.remove('hidden'); $('nameInput').focus(); };
+
+  /* ---------- password se room ki chaabi ---------- */
+  async function deriveKey(r, pw) {
+    const enc = new TextEncoder();
+    const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: enc.encode('chatpechat-' + r), iterations: 100000, hash: 'SHA-256' },
+      base, 256);
+    return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  document.getElementById('nameBtn').onclick = () => {
-    const n = nameInput.value.trim();
-    if (n) setName(n);
-  };
-  nameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.getElementById('nameBtn').click();
-  });
-  who.onclick = () => { nameInput.value = me; overlay.classList.remove('hidden'); nameInput.focus(); };
+  function showPass() {
+    $('passTitle').textContent = '🔒 ' + roomNames[room] + ' room ka password';
+    $('passInput').value = '';
+    $('passErr').textContent = '';
+    $('passOverlay').classList.remove('hidden');
+    $('passInput').focus();
+  }
 
+  async function unlock(create) {
+    const pw = $('passInput').value;
+    if (pw.length < 6) { $('passErr').textContent = 'Password kam se kam 6 akshar ka rakho.'; return; }
+    const btns = [$('openBtn'), $('createBtn'), $('cancelBtn')];
+    btns.forEach(b => b.disabled = true);
+    $('passErr').textContent = 'Check ho raha hai…';
+    try {
+      const key = await deriveKey(room, pw);
+      const ref = db.ref('rooms/' + key + '/ok');
+      const snap = await ref.once('value');
+      if (!snap.exists()) {
+        if (!create) { $('passErr').textContent = 'Galat password, ya room abhi bana nahi.'; return; }
+        await ref.set(true);
+      }
+      keys[room] = key;
+      saveKey(room, key);
+      $('passOverlay').classList.add('hidden');
+      attach();
+    } catch (e) {
+      $('passErr').textContent = 'Dikkat aayi. Internet check karo aur dobara try karo.';
+    } finally {
+      btns.forEach(b => b.disabled = false);
+    }
+  }
+  $('openBtn').onclick = () => unlock(false);
+  $('createBtn').onclick = () => unlock(true);
+  $('cancelBtn').onclick = () => $('passOverlay').classList.add('hidden');
+  $('passInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') unlock(false); });
+
+  /* ---------- password badlo ---------- */
+  $('chpw').onclick = () => {
+    if (!keys[room]) return;
+    $('changeTitle').textContent = '🔑 ' + roomNames[room] + ' ka password badlo';
+    $('newPass').value = ''; $('newPass2').value = ''; $('changeErr').textContent = '';
+    $('changeOverlay').classList.remove('hidden');
+    $('newPass').focus();
+  };
+  $('changeCancel').onclick = () => $('changeOverlay').classList.add('hidden');
+
+  async function changePassword() {
+    const p1 = $('newPass').value, p2 = $('newPass2').value;
+    if (p1.length < 6) { $('changeErr').textContent = 'Password kam se kam 6 akshar ka rakho.'; return; }
+    if (p1 !== p2) { $('changeErr').textContent = 'Dono password alag hain. Dobara likho.'; return; }
+    const oldKey = keys[room];
+    if (!oldKey) return;
+    const btns = [$('changeBtn'), $('changeCancel')];
+    btns.forEach(b => b.disabled = true);
+    $('changeErr').textContent = 'Badal rahe hain… thoda ruko.';
+    try {
+      const newKey = await deriveKey(room, p1);
+      if (newKey === oldKey) { $('changeErr').textContent = 'Ye wahi purana password hai.'; return; }
+      const exists = (await db.ref('rooms/' + newKey + '/ok').once('value')).exists();
+      if (exists) { $('changeErr').textContent = 'Ye password pehle se use me hai. Doosra chuno.'; return; }
+
+      // 1) purani chat copy
+      const old = await db.ref('rooms/' + oldKey + '/messages').limitToLast(300).once('value');
+      if (old.exists()) await db.ref('rooms/' + newKey + '/messages').set(old.val());
+      await db.ref('rooms/' + newKey + '/ok').set(true);
+
+      // 2) is phone ko naye room par le jao
+      keys[room] = newKey;
+      saveKey(room, newKey);
+      attach();
+      $('changeOverlay').classList.add('hidden');
+
+      // 3) purana room hatao (jinke paas purana password hai wo band ho jayenge)
+      try { await db.ref('rooms/' + oldKey).remove(); } catch (e) {}
+    } catch (e) {
+      $('changeErr').textContent = 'Dikkat aayi. Internet check karo aur dobara try karo.';
+    } finally {
+      btns.forEach(b => b.disabled = false);
+    }
+  }
+  $('changeBtn').onclick = changePassword;
+  $('newPass2').addEventListener('keydown', (e) => { if (e.key === 'Enter') changePassword(); });
+
+  /* ---------- messages ---------- */
   function addMessage(m) {
-    const empty = box.querySelector('.empty');
+    const empty = $('messages').querySelector('.empty');
     if (empty) empty.remove();
     const d = document.createElement('div');
     d.className = 'msg' + (m.name === me ? ' me' : '');
@@ -124,36 +246,58 @@
     const tm = document.createElement('div'); tm.className = 'time';
     tm.textContent = m.t ? new Date(m.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     d.append(n, t, tm);
-    box.appendChild(d);
-    box.scrollTop = box.scrollHeight;
+    $('messages').appendChild(d);
+    $('messages').scrollTop = $('messages').scrollHeight;
+  }
+
+  function detach() {
+    if (query) { query.off(); query = null; }
+    if (okRef) { okRef.off(); okRef = null; }
+  }
+
+  function updateChpw() { $('chpw').style.display = keys[room] ? '' : 'none'; }
+
+  function lockRoom() { dropKey(room); openRoom(room); }
+
+  function attach() {
+    detach();
+    updateChpw();
+    const k = keys[room];
+    $('messages').innerHTML = '<div class="empty">Abhi koi message nahi. Pehla message aap bhejo! 👋</div>';
+    query = db.ref('rooms/' + k + '/messages').limitToLast(100);
+    query.on('child_added', (snap) => addMessage(snap.val()), lockRoom);
+    // agar room ka password badal diya gaya (room hat gaya) to yahan se bahar ho jao
+    okRef = db.ref('rooms/' + k + '/ok');
+    okRef.on('value', (s) => { if (!s.exists()) lockRoom(); });
   }
 
   function openRoom(r) {
     room = r;
     document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.room === r));
-    if (query) query.off();
-    box.innerHTML = '<div class="empty">Abhi koi message nahi. Pehla message aap bhejo! 👋</div>';
-    query = db.ref('rooms/' + r + '/messages').limitToLast(100);
-    query.on('child_added', (snap) => addMessage(snap.val()));
+    detach();
+    if (keys[r]) { attach(); return; }
+    updateChpw();
+    $('messages').innerHTML = '<div class="empty">🔒 Is room ka password chahiye.<br><button id="lockBtn">Password daalo</button></div>';
+    $('lockBtn').onclick = showPass;
+    showPass();
   }
-
   document.querySelectorAll('.tab').forEach(b => b.onclick = () => openRoom(b.dataset.room));
 
-  form.addEventListener('submit', (e) => {
+  $('form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const text = input.value.trim();
-    if (!text || !me) return;
-    db.ref('rooms/' + room + '/messages').push({
+    const text = $('input').value.trim();
+    if (!text || !me || !keys[room]) return;
+    db.ref('rooms/' + keys[room] + '/messages').push({
       name: me,
       text: text,
       t: firebase.database.ServerValue.TIMESTAMP
     });
-    input.value = '';
-    input.focus();
+    $('input').value = '';
+    $('input').focus();
   });
 
-  if (me) setName(me); else overlay.classList.remove('hidden');
-  openRoom('friends');
+  /* ---------- shuruaat ---------- */
+  if (me) setName(me); else $('nameOverlay').classList.remove('hidden');
 </script>
 </body>
 </html>
