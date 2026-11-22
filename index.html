@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChatPeChat</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2f4ef;
+    --ink: #20302b;
+    --mine: #2f5d50;
+    --marigold: #f2b134;
+    --line: #d9dfd6;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Hind', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 14px 0;
+  }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .logo { font-family: 'Baloo 2', sans-serif; font-size: 26px; line-height: 1.1; margin: 0; }
+  .logo span { color: var(--marigold); }
+  .who { background: transparent; border: 1px solid #55675f; color: var(--paper); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 14px; }
+  .tabs { display: flex; gap: 6px; margin-top: 10px; }
+  .tab {
+    flex: 1; border: 0; padding: 10px 0; font: inherit; font-weight: 600; font-size: 17px;
+    background: #31443d; color: #c9d4ce; border-radius: 12px 12px 0 0; cursor: pointer;
+  }
+  .tab.active { background: var(--paper); color: var(--ink); box-shadow: inset 0 3px 0 var(--marigold); }
+  .bar { display: none; align-items: center; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  .bar.show { display: flex; }
+  .bar strong { font-size: 17px; }
+  .linkbtn { background: none; border: 0; color: var(--mine); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+  #msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .empty { margin: auto; text-align: center; color: #6b7b74; max-width: 260px; line-height: 1.5; }
+  .m { max-width: 80%; padding: 8px 12px; border-radius: 16px; background: var(--white); border: 1px solid var(--line); align-self: flex-start; word-wrap: break-word; overflow-wrap: anywhere; }
+  .m.me { align-self: flex-end; background: var(--mine); color: #fff; border-color: var(--mine); }
+  .m .n { font-size: 13px; font-weight: 600; color: #8a6a12; margin-bottom: 2px; }
+  .m.me .n { display: none; }
+  .m .t { white-space: pre-wrap; font-size: 16px; line-height: 1.4; }
+  .m .ts { font-size: 11px; opacity: .65; text-align: right; margin-top: 2px; }
+  form#send { display: none; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--paper); }
+  form#send.show { display: flex; }
+  #text { flex: 1; font: inherit; font-size: 16px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--white); color: var(--ink); }
+  #text:focus, .field input:focus { outline: 2px solid var(--marigold); outline-offset: 1px; }
+  .sendbtn { border: 0; background: var(--marigold); color: var(--ink); font: inherit; font-weight: 600; font-size: 16px; padding: 0 20px; border-radius: 22px; cursor: pointer; }
+  /* modal */
+  #overlay { position: fixed; inset: 0; background: rgba(32,48,43,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  #overlay.show { display: flex; }
+  .card { background: var(--paper); border-radius: 18px; padding: 20px; width: 100%; max-width: 340px; }
+  .card h2 { margin: 0 0 4px; font-size: 20px; }
+  .card p { margin: 0 0 12px; color: #55675f; font-size: 14px; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 14px; margin-bottom: 4px; font-weight: 500; }
+  .field input { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); color: var(--ink); }
+  .err { color: #b3261e; font-size: 14px; min-height: 18px; margin-bottom: 8px; }
+  .actions { display: flex; gap: 8px; }
+  .actions button { flex: 1; padding: 11px; border-radius: 12px; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer; border: 1px solid var(--line); background: var(--white); color: var(--ink); }
+  .actions button.ok { background: var(--mine); color: #fff; border-color: var(--mine); }
+  button:focus-visible { outline: 2px solid var(--marigold); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <h1 class="logo">Chat<span>Pe</span>Chat</h1>
+    <button class="who" id="whoBtn" type="button">नाम</button>
+  </div>
+  <div class="tabs">
+    <button class="tab" id="tab-friends" type="button">दोस्त</button>
+    <button class="tab" id="tab-family" type="button">परिवार</button>
+  </div>
+</header>
+
+<div class="bar" id="bar">
+  <strong id="roomName"></strong>
+  <button class="linkbtn" id="pwBtn" type="button">Password badlo</button>
+</div>
+
+<div id="msgs">
+  <div class="empty">ऊपर से दोस्त या परिवार रूम चुनिए। हर बार पासवर्ड डालना होगा।</div>
+</div>
+
+<form id="send" autocomplete="off">
+  <input id="text" type="text" maxlength="500" placeholder="संदेश लिखिए" aria-label="संदेश">
+  <button class="sendbtn" type="submit">भेजो</button>
+</form>
+
+<div id="overlay"><div class="card" id="card"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB7C3BAAnLQ1TiWKQcbxCfbqYYQla0CP7U",
+  authDomain: "chatpechat-66372.firebaseapp.com",
+  databaseURL: "https://chatpechat-66372-default-rtdb.firebaseio.com",
+  projectId: "chatpechat-66372",
+  storageBucket: "chatpechat-66372.firebasestorage.app",
+  messagingSenderId: "764972790822",
+  appId: "1:764972790822:web:e101b9d8fe1b26aeb662e7",
+  measurementId: "G-HPFDBVJVTN"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const ROOMS = { friends: 'दोस्त', family: 'परिवार' };
+const $ = id => document.getElementById(id);
+let room = null;
+let msgRef = null;
+
+// --- local identity (name + anonymous id) ---
+let uid = localStorage.getItem('cpc_uid');
+if (!uid) { uid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('cpc_uid', uid); }
+let myName = localStorage.getItem('cpc_name') || '';
+function showName() { $('whoBtn').textContent = myName || 'नाम'; }
+showName();
+
+async function sha(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+const hashPw = (r, pw) => sha('chatpechat:' + r + ':' + pw);
+
+// --- generic popup ---
+// fields: [{label, type}], onOk(values) returns error text, or null to close
+function popup(title, sub, fields, okText, onOk, onCancel) {
+  const card = $('card');
+  card.innerHTML = '';
+  const h = document.createElement('h2'); h.textContent = title; card.appendChild(h);
+  if (sub) { const p = document.createElement('p'); p.textContent = sub; card.appendChild(p); }
+  const inputs = fields.map(f => {
+    const d = document.createElement('div'); d.className = 'field';
+    const l = document.createElement('label'); l.textContent = f.label;
+    const i = document.createElement('input'); i.type = f.type || 'text'; i.autocomplete = 'off';
+    d.appendChild(l); d.appendChild(i); card.appendChild(d);
+    return i;
+  });
+  const err = document.createElement('div'); err.className = 'err'; card.appendChild(err);
+  const a = document.createElement('div'); a.className = 'actions';
+  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'रद्द करो';
+  const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'ok'; ok.textContent = okText;
+  if (onCancel) a.appendChild(cancel);
+  a.appendChild(ok); card.appendChild(a);
+  $('overlay').classList.add('show');
+  inputs[0].focus();
+
+  const close = () => $('overlay').classList.remove('show');
+  const submit = async () => {
+    ok.disabled = true; err.textContent = '';
+    let e;
+    try { e = await onOk(inputs.map(i => i.value)); } catch (x) { e = 'कुछ गड़बड़ हुई। इंटरनेट देखिए और दोबारा कोशिश कीजिए।'; }
+    ok.disabled = false;
+    if (e) { err.textContent = e; } else { close(); }
+  };
+  ok.onclick = submit;
+  inputs.forEach(i => i.onkeydown = ev => { if (ev.key === 'Enter') submit(); });
+  cancel.onclick = () => { close(); onCancel && onCancel(); };
+}
+
+// --- name ---
+function askName(force) {
+  popup('आपका नाम', 'चैट में यही नाम दिखेगा।', [{ label: 'नाम' }], 'सेव करो', async ([n]) => {
+    n = n.trim();
+    if (!n) return 'नाम लिखिए।';
+    if (n.length > 20) return 'नाम 20 अक्षर तक ही हो सकता है।';
+    myName = n; localStorage.setItem('cpc_name', n); showName();
+    return null;
+  }, force ? null : () => {});
+}
+$('whoBtn').onclick = () => askName(false);
+
+// --- rooms ---
+function leaveRoom() {
+  if (msgRef) { msgRef.off(); msgRef = null; }
+  room = null;
+  $('msgs').innerHTML = '<div class="empty">ऊपर से दोस्त या परिवार रूम चुनिए। हर बार पासवर्ड डालना होगा।</div>';
+  $('bar').classList.remove('show');
+  $('send').classList.remove('show');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+}
+
+async function enterRoom(r) {
+  leaveRoom();               // always drop the old room first
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  $('tab-' + r).classList.add('active');
+  if (!myName) { askName(true); }
+
+  let stored = null;
+  try { stored = (await db.ref('rooms/' + r + '/pw').get()).val(); }
+  catch (e) { $('msgs').innerHTML = '<div class="empty">डेटाबेस से जुड़ नहीं पाए। इंटरनेट और Firebase Rules देखिए।</div>'; return; }
+
+  const cancel = () => leaveRoom();
+  if (stored === null) {
+    popup('"' + ROOMS[r] + '" रूम का पासवर्ड बनाइए', 'यह रूम अभी नया है। पासवर्ड कम से कम 4 अक्षर का रखिए।',
+      [{ label: 'नया पासवर्ड', type: 'password' }, { label: 'फिर से लिखिए', type: 'password' }], 'रूम बनाओ',
+      async ([a, b]) => {
+        if (a.length < 4) return 'पासवर्ड कम से कम 4 अक्षर का हो।';
+        if (a !== b) return 'दोनों पासवर्ड एक जैसे नहीं हैं।';
+        await db.ref('rooms/' + r + '/pw').set(await hashPw(r, a));
+        openRoom(r); return null;
+      }, cancel);
+  } else {
+    popup('"' + ROOMS[r] + '" रूम', 'अंदर जाने के लिए पासवर्ड डालिए।', [{ label: 'पासवर्ड', type: 'password' }], 'अंदर जाओ',
+      async ([p]) => {
+        if ((await hashPw(r, p)) !== stored) return 'पासवर्ड गलत है।';
+        openRoom(r); return null;
+      }, cancel);
+  }
+}
+
+function openRoom(r) {
+  room = r;
+  $('roomName').textContent = ROOMS[r] + ' रूम';
+  $('bar').classList.add('show');
+  $('send').classList.add('show');
+  const box = $('msgs');
+  box.innerHTML = '<div class="empty" id="hint">अभी कोई संदेश नहीं। पहला संदेश आप भेजिए!</div>';
+  msgRef = db.ref('rooms/' + r + '/messages').limitToLast(100);
+  msgRef.on('child_added', snap => {
+    const m = snap.val();
+    const hint = $('hint'); if (hint) hint.remove();
+    const d = document.createElement('div');
+    d.className = 'm' + (m.uid === uid ? ' me' : '');
+    const n = document.createElement('div'); n.className = 'n'; n.textContent = m.name;
+    const t = document.createElement('div'); t.className = 't'; t.textContent = m.text;
+    const ts = document.createElement('div'); ts.className = 'ts';
+    ts.textContent = m.ts ? new Date(m.ts).toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+    d.append(n, t, ts); box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  });
+  $('text').focus();
+}
+
+$('tab-friends').onclick = () => enterRoom('friends');
+$('tab-family').onclick = () => enterRoom('family');
+
+// --- send ---
+$('send').onsubmit = e => {
+  e.preventDefault();
+  const text = $('text').value.trim();
+  if (!text || !room) return;
+  if (!myName) { askName(true); return; }
+  db.ref('rooms/' + room + '/messages').push({
+    name: myName, text: text, uid: uid, ts: firebase.database.ServerValue.TIMESTAMP
+  });
+  $('text').value = '';
+};
+
+// --- change password ---
+$('pwBtn').onclick = () => {
+  if (!room) return;
+  const r = room;
+  popup('Password badlo', '"' + ROOMS[r] + '" रूम का पासवर्ड बदलिए।',
+    [{ label: 'पुराना पासवर्ड', type: 'password' }, { label: 'नया पासवर्ड', type: 'password' }, { label: 'नया पासवर्ड फिर से', type: 'password' }],
+    'बदल दो',
+    async ([old, a, b]) => {
+      const stored = (await db.ref('rooms/' + r + '/pw').get()).val();
+      if ((await hashPw(r, old)) !== stored) return 'पुराना पासवर्ड गलत है।';
+      if (a.length < 4) return 'नया पासवर्ड कम से कम 4 अक्षर का हो।';
+      if (a !== b) return 'दोनों नए पासवर्ड एक जैसे नहीं हैं।';
+      await db.ref('rooms/' + r + '/pw').set(await hashPw(r, a));
+      alert('पासवर्ड बदल गया। बाकी लोगों को नया पासवर्ड बता दीजिए।');
+      return null;
+    }, () => {});
+};
+
+if (!myName) askName(true);
+</script>
+</body>
+</html>
